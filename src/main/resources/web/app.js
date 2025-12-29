@@ -17,24 +17,37 @@ function verificarAutenticacao() {
     const usuarioData = localStorage.getItem('usuario');
     const navUserInfo = document.getElementById('nav-user-info');
     
-    if (usuarioData) {
-        usuarioLogado = JSON.parse(usuarioData);
-        
-        // Mostrar informações do usuário
-        const tipoBadge = getTipoBadgeClass(usuarioLogado.tipo);
-        navUserInfo.innerHTML = `
-            <span class="nav-link">
-                <span class="badge ${tipoBadge} me-2">
-                    ${getTipoIcon(usuarioLogado.tipo)} ${getTipoNome(usuarioLogado.tipo)}
+    if (usuarioData && usuarioData !== 'undefined' && usuarioData !== 'null') {
+        try {
+            usuarioLogado = JSON.parse(usuarioData);
+            
+            // Mostrar informações do usuário
+            const tipoBadge = getTipoBadgeClass(usuarioLogado.tipo);
+            navUserInfo.innerHTML = `
+                <span class="nav-link">
+                    <span class="badge ${tipoBadge} me-2">
+                        ${getTipoIcon(usuarioLogado.tipo)} ${getTipoNome(usuarioLogado.tipo)}
+                    </span>
+                    ${usuarioLogado.nome}
                 </span>
-                ${usuarioLogado.nome}
-            </span>
-        `;
-        
-        // Exibir painel de permissões
-        exibirPermissoes();
+            `;
+            
+            // Exibir painel de permissões
+            exibirPermissoes();
+        } catch (e) {
+            console.error('Erro ao fazer parse do usuário:', e);
+            usuarioLogado = null;
+            localStorage.removeItem('usuario');
+            navUserInfo.innerHTML = `
+                <a class="nav-link text-warning" href="login.html">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Fazer Login
+                </a>
+            `;
+        }
     } else {
         // Modo sem autenticação
+        usuarioLogado = null;
         navUserInfo.innerHTML = `
             <a class="nav-link text-warning" href="login.html">
                 <i class="bi bi-exclamation-triangle me-1"></i>
@@ -49,7 +62,7 @@ function exibirPermissoes() {
     const panel = document.getElementById('permissoes-panel');
     const lista = document.getElementById('permissoes-lista');
     
-    if (!usuarioLogado) return;
+    if (!usuarioLogado || !panel || !lista) return;
     
     let permissoes = [];
     
