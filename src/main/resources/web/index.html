@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Biblioteca</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>📚 Sistema de Biblioteca</h1>
+        <p>Arquitetura MVC - Persistencia SQLite</p>
+    </header>
+
+    <main>
+        <div class="tabs">
+            <button class="tab-button active" onclick="mostrarAba('todos')">Todos os Itens</button>
+            <button class="tab-button" onclick="mostrarAba('disponiveis')">Disponiveis</button>
+            <button class="tab-button" onclick="mostrarAba('emprestados')">Emprestados</button>
+        </div>
+
+        <div id="todos" class="tab-content active">
+            <h2>Acervo Completo</h2>
+            <div id="lista-todos" class="items-grid"></div>
+        </div>
+
+        <div id="disponiveis" class="tab-content">
+            <h2>Itens Disponiveis para Emprestimo</h2>
+            <div id="lista-disponiveis" class="items-grid"></div>
+        </div>
+
+        <div id="emprestados" class="tab-content">
+            <h2>Itens Emprestados</h2>
+            <div id="lista-emprestados" class="items-grid"></div>
+        </div>
+    </main>
+
+    <div id="mensagem" class="mensagem"></div>
+
+    <footer>
+        <p>Demonstracao de Conceitos POO: Encapsulamento, Heranca, Polimorfismo, Abstracao</p>
+        <p>Padroes: MVC, Repository, Service Layer, DTO</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

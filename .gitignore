@@ -1,0 +1,49 @@
+# Compiled class files
+*.class
+bin/
+target/
+
+# Package Files
+*.jar
+*.war
+*.ear
+
+# Database files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Temporary files
+temp_sources.txt
+*.tmp
+*.temp
+*.bak
+
+# Build tools
+.mvn/
+mvnw
+mvnw.cmd
+
+# Application properties (pode conter senhas)
+# Descomente se tiver informações sensíveis
+# src/main/resources/application.properties
+# src/main/resources/database.properties
