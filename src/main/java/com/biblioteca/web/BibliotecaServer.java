@@ -1,10 +1,17 @@
 package com.biblioteca.web;
 
+import com.biblioteca.controller.AutenticacaoController;
 import com.biblioteca.controller.BibliotecaController;
 import com.biblioteca.dto.ItemDTO;
 import com.biblioteca.dto.ItemResponseDTO;
+import com.biblioteca.dto.LoginDTO;
+import com.biblioteca.dto.LoginResponseDTO;
 import com.biblioteca.exception.*;
 import com.biblioteca.model.ItemBiblioteca;
+import com.biblioteca.model.usuario.Usuario;
+import com.biblioteca.repository.UsuarioRepository;
+import com.biblioteca.repository.UsuarioRepositoryImpl;
+import com.biblioteca.service.AutenticacaoService;
 import com.biblioteca.util.Logger;
 import com.biblioteca.web.response.ApiResponse;
 import com.sun.net.httpserver.HttpExchange;
@@ -33,6 +40,7 @@ public class BibliotecaServer {
     private static final Logger logger = Logger.getLogger(BibliotecaServer.class);
     private final HttpServer server;
     private final BibliotecaController controller;
+    private final AutenticacaoController autenticacaoController;
     private final int porta;
 
     /**
@@ -45,6 +53,12 @@ public class BibliotecaServer {
     public BibliotecaServer(BibliotecaController controller, int porta) throws IOException {
         this.controller = controller;
         this.porta = porta;
+        
+        // Inicializar controller de autenticação
+        UsuarioRepository usuarioRepo = new UsuarioRepositoryImpl();
+        AutenticacaoService autenticacaoService = new AutenticacaoService(usuarioRepo);
+        this.autenticacaoController = new AutenticacaoController(autenticacaoService);
+        
         this.server = HttpServer.create(new InetSocketAddress(porta), 0);
         configurarRotas();
         logger.info("Servidor HTTP criado na porta " + porta);
@@ -60,7 +74,12 @@ public class BibliotecaServer {
         // Recursos estáticos
         server.createContext("/", new StaticFileHandler());
         
-        // API REST endpoints
+        // API REST endpoints - Autenticação
+        server.createContext("/api/auth/login", new LoginHandler());
+        server.createContext("/api/auth/logout", new LogoutHandler());
+        server.createContext("/api/auth/me", new MeHandler());
+        
+        // API REST endpoints - Itens
         server.createContext("/api/itens", new ListarItensHandler());
         server.createContext("/api/item/adicionar", new AdicionarItemHandler());
         server.createContext("/api/item/emprestar", new EmprestarItemHandler());
@@ -367,6 +386,131 @@ public class BibliotecaServer {
         exchange.sendResponseHeaders(statusCode, bytes.length);
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(bytes);
+        }
+    }
+
+    /**
+     * Handler para login
+     */
+    class LoginHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            habilitarCORS(exchange);
+            
+            if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                enviarResposta(exchange, 204, "");
+                return;
+            }
+
+            if (!"POST".equals(exchange.getRequestMethod())) {
+                ApiResponse<Void> response = ApiResponse.erro("Método não permitido. Use POST");
+                enviarResposta(exchange, 405, response.toJSON());
+                return;
+            }
+
+            try {
+                String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                logger.debug("Login requisitado");
+                
+                String email = extrairCampo(body, "email");
+                String senha = extrairCampo(body, "senha");
+                
+                LoginDTO loginDTO = new LoginDTO(email, senha);
+                LoginResponseDTO resultado = autenticacaoController.login(loginDTO);
+                
+                logger.info("Login realizado com sucesso: " + email);
+                ApiResponse<LoginResponseDTO> response = ApiResponse.sucesso(resultado, "Login realizado com sucesso");
+                enviarResposta(exchange, 200, response.toJSON());
+            } catch (AutenticacaoException e) {
+                logger.warn("Falha no login: " + e.getMessage());
+                ApiResponse<Void> response = ApiResponse.erro(e.getMessage());
+                enviarResposta(exchange, 401, response.toJSON());
+            } catch (Exception e) {
+                logger.error("Erro ao fazer login: " + e.getMessage());
+                ApiResponse<Void> response = ApiResponse.erro("Erro ao fazer login: " + e.getMessage());
+                enviarResposta(exchange, 500, response.toJSON());
+            }
+        }
+    }
+
+    /**
+     * Handler para logout
+     */
+    class LogoutHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            habilitarCORS(exchange);
+            
+            if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                enviarResposta(exchange, 204, "");
+                return;
+            }
+
+            if (!"POST".equals(exchange.getRequestMethod())) {
+                ApiResponse<Void> response = ApiResponse.erro("Método não permitido. Use POST");
+                enviarResposta(exchange, 405, response.toJSON());
+                return;
+            }
+
+            try {
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                    String token = authHeader.substring(7);
+                    autenticacaoController.logout(token);
+                    logger.info("Logout realizado com sucesso");
+                }
+                
+                ApiResponse<Void> response = ApiResponse.sucesso(null, "Logout realizado com sucesso");
+                enviarResposta(exchange, 200, response.toJSON());
+            } catch (Exception e) {
+                logger.error("Erro ao fazer logout: " + e.getMessage());
+                ApiResponse<Void> response = ApiResponse.erro("Erro ao fazer logout: " + e.getMessage());
+                enviarResposta(exchange, 500, response.toJSON());
+            }
+        }
+    }
+
+    /**
+     * Handler para obter dados do usuário logado
+     */
+    class MeHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            habilitarCORS(exchange);
+            
+            if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                enviarResposta(exchange, 204, "");
+                return;
+            }
+
+            try {
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+                if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                    ApiResponse<Void> response = ApiResponse.erro("Token não fornecido");
+                    enviarResposta(exchange, 401, response.toJSON());
+                    return;
+                }
+                
+                String token = authHeader.substring(7);
+                Usuario usuario = autenticacaoController.validarToken(token);
+                
+                // Criar response DTO manualmente
+                Map<String, Object> usuarioData = new HashMap<>();
+                usuarioData.put("nome", usuario.getNome());
+                usuarioData.put("email", usuario.getEmail());
+                usuarioData.put("tipo", usuario.getTipo().name());
+                
+                ApiResponse<Map<String, Object>> response = ApiResponse.sucesso(usuarioData, "Usuário recuperado com sucesso");
+                enviarResposta(exchange, 200, response.toJSON());
+            } catch (AutenticacaoException e) {
+                logger.warn("Token inválido: " + e.getMessage());
+                ApiResponse<Void> response = ApiResponse.erro(e.getMessage());
+                enviarResposta(exchange, 401, response.toJSON());
+            } catch (Exception e) {
+                logger.error("Erro ao obter usuário: " + e.getMessage());
+                ApiResponse<Void> response = ApiResponse.erro("Erro ao obter usuário: " + e.getMessage());
+                enviarResposta(exchange, 500, response.toJSON());
+            }
         }
     }
 
