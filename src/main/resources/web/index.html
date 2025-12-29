@@ -4,44 +4,150 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Biblioteca</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>📚 Sistema de Biblioteca</h1>
-        <p>Arquitetura MVC - Persistencia SQLite</p>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-gradient-purple sticky-top shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-book-fill me-2"></i>
+                Sistema de Biblioteca
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item" id="nav-user-info">
+                        <!-- Informações do usuário serão inseridas aqui -->
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="fazerLogout()">
+                            <i class="bi bi-box-arrow-right me-1"></i>Sair
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="bg-white py-4 shadow-sm">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h3 mb-1">
+                        <i class="bi bi-journal-bookmark-fill text-primary me-2"></i>
+                        Gerenciamento de Acervo
+                    </h1>
+                    <p class="text-muted mb-0">
+                        <small>Arquitetura MVC • Persistência SQLite • Autenticação RBAC</small>
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <span class="badge bg-success" id="status-badge">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Sistema Online
+                    </span>
+                </div>
+            </div>
+        </div>
     </header>
 
-    <main>
-        <div class="tabs">
-            <button class="tab-button active" onclick="mostrarAba('todos')">Todos os Itens</button>
-            <button class="tab-button" onclick="mostrarAba('disponiveis')">Disponiveis</button>
-            <button class="tab-button" onclick="mostrarAba('emprestados')">Emprestados</button>
-        </div>
+    <!-- Main Content -->
+    <main class="container my-4">
+        <!-- Tabs de Navegação -->
+        <ul class="nav nav-pills mb-4 shadow-sm" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pills-todos-tab" data-bs-toggle="pill" 
+                        data-bs-target="#pills-todos" type="button" role="tab">
+                    <i class="bi bi-grid-fill me-2"></i>Todos os Itens
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-disponiveis-tab" data-bs-toggle="pill" 
+                        data-bs-target="#pills-disponiveis" type="button" role="tab">
+                    <i class="bi bi-check-circle-fill me-2"></i>Disponíveis
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-emprestados-tab" data-bs-toggle="pill" 
+                        data-bs-target="#pills-emprestados" type="button" role="tab">
+                    <i class="bi bi-bookmark-fill me-2"></i>Emprestados
+                </button>
+            </li>
+        </ul>
 
-        <div id="todos" class="tab-content active">
-            <h2>Acervo Completo</h2>
-            <div id="lista-todos" class="items-grid"></div>
-        </div>
+        <!-- Conteúdo das Tabs -->
+        <div class="tab-content" id="pills-tabContent">
+            <!-- Todos os Itens -->
+            <div class="tab-pane fade show active" id="pills-todos" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4><i class="bi bi-collection me-2"></i>Acervo Completo</h4>
+                    <div class="input-group" style="max-width: 300px;">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control" placeholder="Buscar..." id="search-todos">
+                    </div>
+                </div>
+                <div id="lista-todos" class="row g-3"></div>
+            </div>
 
-        <div id="disponiveis" class="tab-content">
-            <h2>Itens Disponiveis para Emprestimo</h2>
-            <div id="lista-disponiveis" class="items-grid"></div>
-        </div>
+            <!-- Itens Disponíveis -->
+            <div class="tab-pane fade" id="pills-disponiveis" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4><i class="bi bi-check-circle me-2"></i>Disponíveis para Empréstimo</h4>
+                    <span class="badge bg-success" id="count-disponiveis">0 itens</span>
+                </div>
+                <div id="lista-disponiveis" class="row g-3"></div>
+            </div>
 
-        <div id="emprestados" class="tab-content">
-            <h2>Itens Emprestados</h2>
-            <div id="lista-emprestados" class="items-grid"></div>
+            <!-- Itens Emprestados -->
+            <div class="tab-pane fade" id="pills-emprestados" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4><i class="bi bi-bookmark me-2"></i>Atualmente Emprestados</h4>
+                    <span class="badge bg-warning text-dark" id="count-emprestados">0 itens</span>
+                </div>
+                <div id="lista-emprestados" class="row g-3"></div>
+            </div>
         </div>
     </main>
 
-    <div id="mensagem" class="mensagem"></div>
+    <!-- Toast de Notificações -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast-notificacao" class="toast" role="alert">
+            <div class="toast-header">
+                <i class="bi bi-bell-fill me-2 text-primary"></i>
+                <strong class="me-auto">Notificação</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toast-mensagem">
+                Mensagem aqui
+            </div>
+        </div>
+    </div>
 
-    <footer>
-        <p>Demonstracao de Conceitos POO: Encapsulamento, Heranca, Polimorfismo, Abstracao</p>
-        <p>Padroes: MVC, Repository, Service Layer, DTO</p>
+    <!-- Footer -->
+    <footer class="bg-white py-4 mt-5 shadow-sm">
+        <div class="container text-center text-muted">
+            <p class="mb-2">
+                <small>
+                    <strong>Conceitos POO:</strong> Encapsulamento • Herança • Polimorfismo • Abstração
+                </small>
+            </p>
+            <p class="mb-0">
+                <small>
+                    <strong>Padrões:</strong> MVC • Repository • Service Layer • DTO • RBAC
+                </small>
+            </p>
+        </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
