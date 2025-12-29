@@ -484,9 +484,9 @@ Este projeto foi desenvolvido para fins educacionais e de portfólio.
 
 **Desenvolvedor Full-Stack Java**
 
-- 💼 LinkedIn: [Seu LinkedIn]
-- 🐙 GitHub: [Seu GitHub]
-- 📧 Email: [Seu Email]
+- 💼 LinkedIn: https://www.linkedin.com/in/gabriel-%C3%A2ngelo-b71565267/
+- 🐙 GitHub: https://github.com/DevAngeloOliveira
+- 📧 Email: dev.angelooliveira@gmail.com
 
 ---
 
